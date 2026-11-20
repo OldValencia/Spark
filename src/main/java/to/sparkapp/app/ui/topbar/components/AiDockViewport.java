@@ -65,8 +65,9 @@ final class AiDockViewport extends StackPane {
             e.consume();
         });
 
-        leftArrow = new AiDockScrollArrow(true, dock);
-        rightArrow = new AiDockScrollArrow(false, dock);
+        var smoothScroll = new DockSmoothScroll(scrollPane, dockContainer, dock::isReducedMotion);
+        leftArrow = new AiDockScrollArrow(true, smoothScroll);
+        rightArrow = new AiDockScrollArrow(false, smoothScroll);
 
         leftArrow.managedProperty().bind(leftArrow.visibleProperty());
         rightArrow.managedProperty().bind(rightArrow.visibleProperty());

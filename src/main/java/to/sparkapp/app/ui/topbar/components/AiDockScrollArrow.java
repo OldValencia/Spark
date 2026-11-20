@@ -11,13 +11,21 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
 /**
- * Scroll controls occupy their own space, outside the tab viewport.
+ * Scroll controls occupy their own space, outside the tab viewport. A click glides the tabs by about half the visible
+ * strip; holding the arrow keeps them moving.
  */
 public final class AiDockScrollArrow extends StackPane {
+    /** Part of the visible strip one click moves, so the next tabs come into view without losing your place. */
+    private static final double CLICK_SHARE = 0.5;
+    private static final double MIN_CLICK_PIXELS = 120;
+    private static final double HOLD_PIXELS = 60;
+    private static final Duration HOLD_INTERVAL = Duration.millis(80);
+    private static final Duration HOLD_DELAY = Duration.millis(350);
+
     private final Timeline hold;
     private final Timeline delay;
 
-    public AiDockScrollArrow(boolean left, AiDock dock) {
+    AiDockScrollArrow(boolean left, DockSmoothScroll scroll) {
         setMinSize(20, 30);
         setPrefSize(20, 30);
         setMaxSize(20, 30);
@@ -31,24 +39,14 @@ public final class AiDockScrollArrow extends StackPane {
         setAccessibleText(left ? "Previous sites" : "More sites");
         Tooltip.install(this, ShellTooltip.create(getAccessibleText()));
 
-        Runnable step = () -> {
-            var pane = dock.getScrollPane();
-            double overflow = dock.getDockContainer().getWidth() - pane.getViewportBounds().getWidth();
-
-            if (overflow > 0) {
-                pane.setHvalue(Math.clamp(pane.getHvalue() + (left ? -36 : 36) / overflow, 0, 1));
-            }
-        };
-        hold = new Timeline(new KeyFrame(Duration.millis(80), e -> step.run()));
+        var direction = left ? -1 : 1;
+        hold = new Timeline(new KeyFrame(HOLD_INTERVAL, e -> scroll.scrollBy(direction * HOLD_PIXELS)));
         hold.setCycleCount(Animation.INDEFINITE);
-        delay = new Timeline(new KeyFrame(Duration.millis(300), e -> hold.play()));
+        delay = new Timeline(new KeyFrame(HOLD_DELAY, e -> hold.play()));
+
         setOnMousePressed(e -> {
-            step.run();
-
-            if (!isDisabled()) {
-                delay.playFromStart();
-            }
-
+            scroll.scrollBy(direction * clickDistance(scroll));
+            delay.playFromStart();
             e.consume();
         });
         setOnMouseReleased(e -> {
@@ -61,6 +59,10 @@ public final class AiDockScrollArrow extends StackPane {
                 cancel();
             }
         });
+    }
+
+    private static double clickDistance(DockSmoothScroll scroll) {
+        return Math.max(MIN_CLICK_PIXELS, scroll.visibleWidth() * CLICK_SHARE);
     }
 
     public void cancel() {

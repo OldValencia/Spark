@@ -135,7 +135,8 @@ public class GlobalHotkeyManager implements NativeKeyListener, NativeMouseInputL
     }
 
     private void toggleWindow(long requestedAt) {
-        if (mainWindow.isShowing() && !mainWindow.isHiding()) {
+        // A window minimized by Win + D is out of sight, so the hotkey brings it back instead of hiding it.
+        if (mainWindow.isShowing() && !mainWindow.isIconified() && !mainWindow.isHiding()) {
             mainWindow.hideMainWindow();
         } else {
             mainWindow.showMainWindow(requestedAt);
