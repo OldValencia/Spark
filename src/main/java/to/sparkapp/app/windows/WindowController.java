@@ -37,6 +37,7 @@ public final class WindowController {
         this.stage = stage;
         geometry = new WindowGeometry(stage, preferences);
         siteSizes = new SiteWindowSizes(stage, preferences, geometry);
+        MinimizedWindowBounds.install(stage);
         motion = new WindowMotion(stage, preferences, this::isDocked, () -> geometry.monitor.getMinY(),
                 state -> visibility = state);
         pointer = new WindowPointerInteraction(stage, geometry, this::settleReveal);
